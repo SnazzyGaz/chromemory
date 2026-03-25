@@ -1,4 +1,4 @@
-const CACHE = 'chromemory-permanent-v1';   // Never change this name again
+const CACHE = 'chromemory-permanent-v3';
 
 const ASSETS = [
   '/',
@@ -11,7 +11,7 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', e => {
-  console.log('📦 Installing permanent cache');
+  console.log('📦 Installing cache v3');
   e.waitUntil(
     caches.open(CACHE).then(cache => cache.addAll(ASSETS))
   );
@@ -19,18 +19,42 @@ self.addEventListener('install', e => {
 });
 
 self.addEventListener('activate', e => {
-  console.log('✅ Permanent service worker activated');
-  e.waitUntil(self.clients.claim());
+  console.log('✅ Service worker v3 activated');
+  // Delete any old caches
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(
+        keys.filter(k => k !== CACHE).map(k => {
+          console.log('🗑 Deleting old cache:', k);
+          return caches.delete(k);
+        })
+      )
+    ).then(() => self.clients.claim())
+  );
 });
 
 self.addEventListener('fetch', e => {
+  const url = new URL(e.request.url);
+
+  // Network-first for HTML navigation — always get the freshest shell
+  if (e.request.mode === 'navigate' || url.pathname.endsWith('.html')) {
+    e.respondWith(
+      fetch(e.request)
+        .then(res => {
+          // Update cache with fresh copy
+          const clone = res.clone();
+          caches.open(CACHE).then(cache => cache.put(e.request, clone));
+          return res;
+        })
+        .catch(() => caches.match('/index.html'))
+    );
+    return;
+  }
+
+  // Cache-first for everything else (icons, fonts, manifest)
   e.respondWith(
     caches.match(e.request).then(cached => {
       return cached || fetch(e.request).catch(() => {
-        // Very basic offline fallback
-        if (e.request.mode === 'navigate') {
-          return caches.match('/index.html');
-        }
         return new Response('Offline', { status: 503 });
       });
     })
