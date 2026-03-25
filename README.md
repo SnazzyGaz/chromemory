@@ -3,7 +3,7 @@
 A fun and challenging color memory test.  
 How precisely can you remember and recreate colors?
 
-![Chromemory Preview]([https://raw.githubusercontent.com/SnazzyGaz/chromemory/refs/heads/main/icon-512.png])
+![Chromemory Preview](https://raw.githubusercontent.com/SnazzyGaz/chromemory/refs/heads/main/icon-512.png)
 
 ## 🎮 How to Play
 
