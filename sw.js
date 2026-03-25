@@ -1,27 +1,26 @@
-const CACHE = 'chromemory-permanent-v4';   // bumped version
-
-const BASE = '/QRsuite';
+const CACHE = 'chromemory-permanent-v3';
 
 const ASSETS = [
-  `${BASE}/`,
-  `${BASE}/index.html`,
-  `${BASE}/manifest.json`,
-  `${BASE}/sw.js`,
-  `${BASE}/icon-192.png`,
-  `${BASE}/icon-512.png`,
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/sw.js',
+  '/icon-192.png',
+  '/icon-512.png',
   'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap'
 ];
 
 self.addEventListener('install', e => {
-  console.log('📦 Installing cache v4');
+  console.log('📦 Installing cache v3');
   e.waitUntil(
     caches.open(CACHE).then(cache => cache.addAll(ASSETS))
   );
-  self.skipWaiting();        // Activate immediately
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', e => {
-  console.log('✅ Service worker v4 activated');
+  console.log('✅ Service worker v3 activated');
+  // Delete any old caches
   e.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
@@ -37,21 +36,22 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
-  // Network-first for HTML (so changes on GitHub show up quickly)
+  // Network-first for HTML navigation — always get the freshest shell
   if (e.request.mode === 'navigate' || url.pathname.endsWith('.html')) {
     e.respondWith(
       fetch(e.request)
         .then(res => {
+          // Update cache with fresh copy
           const clone = res.clone();
           caches.open(CACHE).then(cache => cache.put(e.request, clone));
           return res;
         })
-        .catch(() => caches.match(`${BASE}/index.html`))
+        .catch(() => caches.match('/index.html'))
     );
     return;
   }
 
-  // Cache-first for static assets
+  // Cache-first for everything else (icons, fonts, manifest)
   e.respondWith(
     caches.match(e.request).then(cached => {
       return cached || fetch(e.request).catch(() => {
