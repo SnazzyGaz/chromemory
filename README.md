@@ -18,31 +18,32 @@ Every game is defined by a **seed** (e.g. `ANVIL-7823`). Share the seed with fri
 ## ✨ Features
 
 - Fully offline-capable Progressive Web App (PWA)
-- Installable on Android and iOS
+- Installable on Android, iOS, and desktop
 - Works great on mobile and desktop
 - Precise scoring with perceptual colour differences
 - Seed system for reproducible games
 
 ## 🚀 Try It Live
 
-[Play Chromemory](https://chromemory.netlify.app)  
+[Play Chromemory](https://snazzygaz.github.io/chromemory/)
 
 ## 📱 Install as App
 
-**On Android:** Open in Chrome → tap the three dots → "Install app"  
-**On iPhone/iPad:** Open in Safari → tap Share → "Add to Home Screen"
+**On Android / Desktop Chrome:**  
+Open the site → tap the three dots menu → **Install app**
+
+**On iPhone / iPad (Safari):**  
+Open the site → tap the Share button → **Add to Home Screen**
 
 ## 🛠️ Tech Stack
 
 - Pure HTML, CSS, and JavaScript (no frameworks)
 - Service Worker for offline support and caching
 - Web App Manifest for PWA features
-- Hosted on Netlify
+- Hosted on **GitHub Pages**
 
 ## 📄 License
 
 This project is open source and free to use. Feel free to fork it, improve it, or use it.
 
-Made as a fun personal project to test colour memory and PWA capabilities inspired by dialed.gg.
-
----
+Made as a fun personal project to test colour memory and PWA capabilities, inspired by dialed.gg.
