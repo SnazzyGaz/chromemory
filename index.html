@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Chromemory">
 <meta name="mobile-web-app-capable" content="yes">
-<link rel="manifest" href="/manifest.json">
+<link rel="manifest" href="manifest.json">
 <title>Chromemory</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap');
@@ -846,7 +846,7 @@ html, body {
 <div class="screen active" id="home">
   <div class="home-inner">
 
-    <button onclick="document.getElementById('info-modal').style.display='flex'" style="position:absolute;top:16px;right:16px;width:28px;height:28px;border-radius:50%;background:transparent;border:0.5px solid var(--line2);color:var(--mute);font-family:var(--mono);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;z-index:10" onmouseover="this.style.borderColor='var(--mute)';this.style.color='var(--sub)'" onmouseout="this.style.borderColor='var(--line2)';this.style.color='var(--mute)'">?</button>
+    <button onclick="openInfoModal()" style="position:absolute;top:16px;right:16px;width:28px;height:28px;border-radius:50%;background:transparent;border:0.5px solid var(--line2);color:var(--mute);font-family:var(--mono);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;z-index:10" onmouseover="this.style.borderColor='var(--mute)';this.style.color='var(--sub)'" onmouseout="this.style.borderColor='var(--line2)';this.style.color='var(--mute)'">?</button>
 
     <div class="home-hero">
       <div class="home-hero-text">
@@ -1110,6 +1110,8 @@ c-374 9 -584 55 -812 177 -141 76 -329 320 -247 320 7 0 40 -34 73 -76z m-136
     </div>
     <button class="primary-btn" onclick="playSeed()">Play</button>
     <p class="tip-text" style="margin-top:6px">Enter a friend's seed to play their exact colours</p>
+    <div class="divider" style="margin-top:14px"><span>or</span></div>
+    <button class="ghost-btn" onclick="openHistory()">View history</button>
   </div>
 </div>
 
@@ -1778,6 +1780,8 @@ function showEnd() {
   countUp(document.getElementById('end-score'), 0, avg, 1000, () => {
     document.getElementById('end-grade').textContent = grade(avg) + ' — avg per round';
   });
+
+  saveToHistory(avg);
 }
 
 function shareText() {
@@ -1824,7 +1828,102 @@ function replaySeed() {
   startGame();
 }
 
-// ── INIT ──
+// ── HISTORY ──
+function saveToHistory(avg) {
+  const entry = {
+    seed: seedStr,
+    score: avg,
+    diff,
+    date: new Date().toISOString(),
+    rounds: history.map(r => ({ ...r }))
+  };
+  let h = loadHistory();
+  h.unshift(entry);
+  // Cap at 50 entries
+  h = h.slice(0, 50);
+  try { localStorage.setItem('chromemory_history', JSON.stringify(h)); } catch(e) {}
+}
+
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem('chromemory_history') || '[]'); } catch(e) { return []; }
+}
+
+function openHistory() {
+  const h = loadHistory();
+  const list = document.getElementById('history-list');
+  if (!h.length) {
+    list.innerHTML = `<div style="font-size:11px;color:var(--dim);text-align:center;padding:24px 0">No games yet.</div>`;
+  } else {
+    list.innerHTML = h.map((e, i) => {
+      const d = new Date(e.date);
+      const dateStr = d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+      return `<div onclick="openDetail(${i})" style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--line);cursor:pointer" onmouseover="this.style.opacity='.7'" onmouseout="this.style.opacity='1'">
+        <div>
+          <div style="font-size:12px;letter-spacing:.08em;color:var(--bright);margin-bottom:2px">${e.seed}</div>
+          <div style="font-size:9px;letter-spacing:.08em;color:var(--dim);text-transform:uppercase">${dateStr} · ${e.diff}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:18px;font-weight:300;color:var(--bright);letter-spacing:-.01em">${fmt(e.score)}</div>
+          <div style="font-size:9px;color:var(--dim);margin-top:1px">${grade(e.score)}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('history-modal').style.display = 'flex';
+}
+
+function openDetail(i) {
+  const h = loadHistory();
+  const e = h[i];
+  if (!e) return;
+  document.getElementById('detail-title').textContent = e.seed;
+  const d = new Date(e.date);
+  const dateStr = d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+  let html = `<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+    <div style="font-size:36px;font-weight:300;color:var(--bright);letter-spacing:-.02em;line-height:1">${fmt(e.score)}</div>
+    <div style="font-size:10px;letter-spacing:.12em;color:var(--mute);text-transform:uppercase">${grade(e.score)}</div>
+  </div>
+  <div style="font-size:9px;color:var(--dim);letter-spacing:.08em;margin-bottom:16px">${dateStr} · ${e.diff}</div>
+  <div style="height:0.5px;background:var(--line);margin-bottom:14px"></div>`;
+
+  html += e.rounds.map((r, ri) => {
+    const tCol = hsl(r.t.h, r.t.s, r.t.b);
+    const gCol = hsl(r.g.h, r.g.s, r.g.b);
+    return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <div style="width:48px;height:48px;border-radius:8px;overflow:hidden;position:relative;flex-shrink:0">
+        <div style="position:absolute;inset:0;background:${tCol};clip-path:polygon(0 0,100% 0,100% 100%)"></div>
+        <div style="position:absolute;inset:0;background:${gCol};clip-path:polygon(0 0,0 100%,100% 100%)"></div>
+      </div>
+      <div style="flex:1">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+          <div style="font-size:9px;letter-spacing:.12em;color:var(--dim);text-transform:uppercase">Round ${ri+1}</div>
+          <div style="font-size:17px;font-weight:300;color:var(--bright)">${fmt(r.tot)}</div>
+        </div>
+        <div style="display:flex;gap:0">
+          <div style="flex:1;text-align:center">
+            <div style="font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em">H</div>
+            <div style="font-size:11px;color:var(--sub)">${fmt(r.sh)}</div>
+            <div style="font-size:8px;color:var(--dim)">${r.dh}° off</div>
+          </div>
+          <div style="flex:1;text-align:center">
+            <div style="font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em">S</div>
+            <div style="font-size:11px;color:var(--sub)">${fmt(r.ss)}</div>
+            <div style="font-size:8px;color:var(--dim)">${r.ds.toFixed(1)}% off</div>
+          </div>
+          <div style="flex:1;text-align:center">
+            <div style="font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em">B</div>
+            <div style="font-size:11px;color:var(--sub)">${fmt(r.sb)}</div>
+            <div style="font-size:8px;color:var(--dim)">${r.db.toFixed(1)}% off</div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('detail-body').innerHTML = html;
+  document.getElementById('history-detail-modal').style.display = 'flex';
+}
+
 updateSlider('h');
 updateSlider('s');
 updateSlider('l');
@@ -1875,10 +1974,32 @@ freshSeedToInput();
   });
 })();
 </script>
+<!-- HISTORY MODAL -->
+<div id="history-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:var(--bg2);border:0.5px solid var(--line2);border-radius:12px;max-width:480px;width:100%;max-height:80vh;display:flex;flex-direction:column;position:relative">
+    <div style="padding:20px 20px 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <div style="font-size:11px;letter-spacing:.22em;color:var(--dim);text-transform:uppercase">History</div>
+      <button onclick="document.getElementById('history-modal').style.display='none'" style="background:transparent;border:none;color:var(--dim);font-size:18px;cursor:pointer;line-height:1;font-family:var(--mono)">×</button>
+    </div>
+    <div id="history-list" style="overflow-y:auto;padding:12px 20px 20px;flex:1"></div>
+  </div>
+</div>
+
+<!-- HISTORY DETAIL MODAL -->
+<div id="history-detail-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:110;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:var(--bg2);border:0.5px solid var(--line2);border-radius:12px;max-width:480px;width:100%;max-height:80vh;display:flex;flex-direction:column;position:relative">
+    <div style="padding:20px 20px 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <div id="detail-title" style="font-size:11px;letter-spacing:.22em;color:var(--dim);text-transform:uppercase">—</div>
+      <button onclick="document.getElementById('history-detail-modal').style.display='none'" style="background:transparent;border:none;color:var(--dim);font-size:18px;cursor:pointer;line-height:1;font-family:var(--mono)">×</button>
+    </div>
+    <div id="detail-body" style="overflow-y:auto;padding:12px 20px 20px;flex:1"></div>
+  </div>
+</div>
+
 <!-- INFO MODAL -->
-<div id="info-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)this.style.display='none'">
+<div id="info-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeInfoModal()">
   <div style="background:var(--bg2);border:0.5px solid var(--line2);border-radius:12px;max-width:480px;width:100%;max-height:80vh;overflow-y:auto;padding:28px 24px;position:relative">
-    <button onclick="document.getElementById('info-modal').style.display='none'" style="position:absolute;top:14px;right:14px;background:transparent;border:none;color:var(--dim);font-size:18px;cursor:pointer;line-height:1;font-family:var(--mono)">×</button>
+    <button onclick="closeInfoModal()" style="position:absolute;top:14px;right:14px;background:transparent;border:none;color:var(--dim);font-size:18px;cursor:pointer;line-height:1;font-family:var(--mono)">×</button>
 
     <div style="font-size:11px;letter-spacing:.22em;color:var(--dim);text-transform:uppercase;margin-bottom:16px">How to play</div>
 
@@ -1945,27 +2066,183 @@ freshSeedToInput();
       Every game has a seed — a short code that locks in the exact set of colours. Share it with a friend to challenge them on the same colours. Enter their seed on the home screen to play their game.
     </div>
 
+    <div style="height:0.5px;background:var(--line);margin-top:20px;margin-bottom:16px"></div>
+
+    <div style="font-size:10px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase;text-align:center">Made by snazzygaz</div>
+
   </div>
 </div>
 
 <script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js')
-      .then(reg => {
-        console.log('✅ Service Worker registered successfully', reg);
-      })
-      .catch(err => {
-        console.error('❌ Service Worker registration failed:', err);
-      });
+// ── BACK BUTTON HANDLING ──
+//
+// Strategy: maintain our own navStack array that mirrors what the user
+// has opened. On every meaningful open/navigate we push one sentinel
+// entry into the browser history AND record what it represents in
+// navStack. On popstate we look at navStack (not e.state) to decide
+// what to close/dismiss, then always re-push a sentinel so the stack
+// never empties while there's still something to dismiss.
+//
+// The browser stack only ever needs ONE sentinel above the base — we
+// just keep re-pushing it. This avoids the "ran out of history entries"
+// bug that caused the app to close.
+
+const navStack = [];   // each entry: { type: 'screen'|'modal', id: string }
+let backPressedOnce = false;
+let backToastTimer  = null;
+
+// Always keep one sentinel above base so popstate always fires.
+function ensureSentinel() {
+  window.history.pushState({ sentinel: true }, '');
+}
+
+// ── Wrap showScreen ──
+const _showScreen = showScreen;
+showScreen = function(id) {
+  _showScreen(id);
+  if (id === 'home') {
+    // Going home clears the stack — but we still need the base sentinel.
+    navStack.length = 0;
+    ensureSentinel();
+  } else {
+    navStack.push({ type: 'screen', id });
+    ensureSentinel();
+  }
+};
+
+// ── Wrap openHistory ──
+const _openHistory = openHistory;
+openHistory = function() {
+  _openHistory();
+  navStack.push({ type: 'modal', id: 'history-modal' });
+  ensureSentinel();
+};
+
+// ── Wrap openDetail ──
+const _openDetail = openDetail;
+openDetail = function(i) {
+  _openDetail(i);
+  navStack.push({ type: 'modal', id: 'history-detail-modal' });
+  ensureSentinel();
+};
+
+// ── Wrap info modal opener — patch the inline onclick ──
+// The ? button uses an inline onclick so we intercept via a named fn.
+function openInfoModal() {
+  document.getElementById('info-modal').style.display = 'flex';
+  navStack.push({ type: 'modal', id: 'info-modal' });
+  ensureSentinel();
+}
+function closeInfoModal() {
+  document.getElementById('info-modal').style.display = 'none';
+}
+
+// ── Central popstate handler ──
+window.addEventListener('popstate', function() {
+  const top = navStack[navStack.length - 1];
+
+  if (!top) {
+    // Stack is empty → we're on home. Double-press to exit.
+    if (backPressedOnce) {
+      clearTimeout(backToastTimer);
+      backPressedOnce = false;
+      // Let the OS handle — don't re-push, browser will background/close.
+      return;
+    }
+    backPressedOnce = true;
+    showBackToast('Press back again to exit');
+    backToastTimer = setTimeout(() => { backPressedOnce = false; }, 2500);
+    ensureSentinel(); // keep sentinel so second press also fires popstate
+    return;
   }
 
-  // This is what we need to see in the console
-  let deferredPrompt;
-  window.addEventListener('beforeinstallprompt', (e) => {
-    console.log('🎉 beforeinstallprompt FIRED! You can now install.');
-    deferredPrompt = e;
-    // Optional: show your own "Install" button here
+  if (top.type === 'modal') {
+    // Close the modal.
+    const el = document.getElementById(top.id);
+    if (el) el.style.display = 'none';
+    navStack.pop();
+    // If there's still something beneath, keep a sentinel above it.
+    ensureSentinel();
+    return;
+  }
+
+  if (top.type === 'screen') {
+    const screenId = top.id;
+
+    if (screenId === 'game' || screenId === 'result') {
+      // Mid-game — require double-press to go to menu.
+      if (backPressedOnce) {
+        clearTimeout(backToastTimer);
+        backPressedOnce = false;
+        navStack.pop();
+        goHome(); // goHome will clear the stack and re-push sentinel
+        return;
+      }
+      backPressedOnce = true;
+      showBackToast('Press back again to return to menu');
+      backToastTimer = setTimeout(() => { backPressedOnce = false; }, 2500);
+      ensureSentinel();
+      return;
+    }
+
+    // end screen or any other screen → single back goes home.
+    navStack.pop();
+    goHome();
+    return;
+  }
+});
+
+// ── Toast ──
+function showBackToast(msg) {
+  let toast = document.getElementById('back-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'back-toast';
+    toast.style.cssText = `
+      position: fixed;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);
+      left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: var(--bg4);
+      border: 0.5px solid var(--line2);
+      color: var(--sub);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      padding: 9px 18px;
+      border-radius: 4px;
+      z-index: 9999;
+      opacity: 0;
+      transition: opacity .2s, transform .2s;
+      white-space: nowrap;
+      pointer-events: none;
+    `;
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  requestAnimationFrame(() => {
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateX(-50%) translateY(0)';
   });
+  clearTimeout(toast._hideTimer);
+  toast._hideTimer = setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(-50%) translateY(12px)';
+  }, 2200);
+}
+
+// ── Init: place base sentinel on page load ──
+window.addEventListener('DOMContentLoaded', () => {
+  window.history.replaceState({ base: true }, '');
+  ensureSentinel();
+});
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
 </script>
 </body>
 </html>
