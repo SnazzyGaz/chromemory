@@ -2,18 +2,18 @@
   "name": "Chromemory",
   "short_name": "Chromemory",
   "description": "How precisely do you see colours? Test your memory.",
-  "start_url": "/QRsuite/",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#26262a",
   "theme_color": "#26262a",
   "icons": [
     {
-      "src": "/QRsuite/icon-192.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/QRsuite/icon-512.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
