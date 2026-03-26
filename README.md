@@ -1,6 +1,6 @@
 # Chromemory
 
-![Chromemory Header](https://raw.githubusercontent.com/SnazzyGaz/chromemory/main/rdhead.png)
+![Chromemory Header](https://raw.githubusercontent.com/SnazzyGaz/chromemory/main/rdhead2.png)
 
 A fun and challenging colour memory test.  
 How precisely can you remember and recreate colours?
