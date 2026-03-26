@@ -1424,7 +1424,8 @@ function axScore(d, range) {
 
 // ── SEEDS ──
 function makeSeedStr(n) {
-  return WORDS[n % WORDS.length] + '-' + String(n).padStart(4, '0');
+  const wordIndex = Math.floor(Math.random() * WORDS.length);
+  return WORDS[wordIndex] + '-' + String(n).padStart(4, '0');
 }
 
 
@@ -1443,7 +1444,10 @@ function labelColours(h, s, b) {
 function parseSeed(s) {
   const m = s.trim().toUpperCase().match(/^([A-Z]+)-(\d{3,4})$/);
   if (!m) return false;
-  seedNum = parseInt(m[2]);
+  const wordIndex = WORDS.indexOf(m[1]);
+  if (wordIndex === -1) return false;
+  const num = parseInt(m[2]);
+  seedNum = wordIndex * 9000 + num;
   seedStr = s.trim().toUpperCase();
   rng = mulberry32(seedNum);
   return true;
@@ -1494,8 +1498,10 @@ function getDailyDateKey() {
 }
 
 function getDailySeed() {
-  const n = parseInt(getDailyDateKey()) % 9000 + 1000;
-  return makeSeedStr(n);
+  const dateNum = parseInt(getDailyDateKey());
+  const n = dateNum % 9000 + 1000;
+  const wordIndex = dateNum % WORDS.length;
+  return WORDS[wordIndex] + '-' + String(n).padStart(4, '0');
 }
 
 function getDailyRecord() {
