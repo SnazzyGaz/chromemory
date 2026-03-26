@@ -2521,6 +2521,8 @@ function _showUpdateToast(msg, isUpdate) {
       'display:flex',
       'align-items:center',
       'gap:8px',
+      'will-change:transform,opacity',
+      'contain:layout style',
     ].join(';');
     document.body.appendChild(toast);
   }
