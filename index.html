@@ -172,7 +172,6 @@ html, body {
   border-radius: 3px;
   transition: all .15s;
   margin-bottom: 7px;
-  -webkit-tap-highlight-color: transparent;
 }
 .ghost-btn:hover { border-color: var(--mute); color: var(--text); }
 
@@ -1105,18 +1104,25 @@ c-374 9 -584 55 -812 177 -141 76 -329 320 -247 320 7 0 40 -34 73 -76z m-136
       </div>
     </div>
 
-    <div class="seed-field-row">
-      <input type="text" id="seed-input" placeholder="Leave blank for random seed" maxlength="14"
-        oninput="this.value=this.value.toUpperCase()"
-        onkeydown="if(event.key==='Enter')playSeed()">
-      <button class="seed-random-btn" onclick="randomiseSeed()" title="Random seed">&#8645;</button>
-    </div>
-    <div style="margin:-4px 0 14px;min-height:16px">
-      <span style="font-size:9px;letter-spacing:.08em;color:var(--dim)">seed: </span><span id="home-seed-display" style="font-size:9px;letter-spacing:.08em;color:var(--mute)" id="home-seed-display">—</span>
-    </div>
     <button class="primary-btn" onclick="playSeed()">Play</button>
-    <p class="tip-text" style="margin-top:6px">Enter a friend's seed to play their exact colours</p>
-    <div class="divider" style="margin-top:14px"><span>or</span></div>
+
+    <div style="margin:10px 0 6px;text-align:center">
+      <button onclick="toggleSeedPanel(this)" style="background:transparent;border:none;color:var(--dim);font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent;transition:color .15s" onmouseover="this.style.color='var(--mute)'" onmouseout="this.style.color='var(--dim)'">have a seed? ▾</button>
+    </div>
+    <div id="seed-panel" style="display:none;margin-bottom:6px">
+      <div class="seed-field-row">
+        <input type="text" id="seed-input" placeholder="e.g. SLATE-1426" maxlength="14"
+          oninput="this.value=this.value.toUpperCase()"
+          onkeydown="if(event.key==='Enter')playSeed()">
+        <button class="seed-random-btn" onclick="randomiseSeed()" title="Random seed">&#8645;</button>
+      </div>
+      <div style="margin:-4px 0 4px;min-height:16px">
+        <span style="font-size:9px;letter-spacing:.08em;color:var(--dim)">seed: </span><span id="home-seed-display" style="font-size:9px;letter-spacing:.08em;color:var(--mute)">—</span>
+      </div>
+      <p class="tip-text">Enter a friend's seed to play their exact colours</p>
+    </div>
+
+    <div class="divider" style="margin-top:10px"><span>or</span></div>
     <button class="ghost-btn" onclick="openHistory()">View history</button>
   </div>
 </div>
@@ -1384,6 +1390,7 @@ function showScreen(id) {
 
 function freshSeedToInput() {
   clearDailyMode();
+  closeSeedPanel();
   // Always return highlight to medium
   document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('on'));
   const medBtn = document.getElementById('medium-btn');
@@ -1483,6 +1490,7 @@ function setDaily(btn) {
   document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
   const seed = getDailySeed();
+  openSeedPanel();
   document.getElementById('seed-input').value = seed;
   document.getElementById('home-seed-display').textContent = seed;
   document.getElementById('seed-input').disabled = true;
@@ -1504,6 +1512,28 @@ function setDiff(d, btn) {
   btn.classList.add('on');
 }
 
+function toggleSeedPanel(btn) {
+  const panel = document.getElementById('seed-panel');
+  const open = panel.style.display === 'none';
+  panel.style.display = open ? 'block' : 'none';
+  btn.textContent = open ? 'have a seed? ▴' : 'have a seed? ▾';
+  if (open) document.getElementById('seed-input').focus();
+}
+
+function openSeedPanel() {
+  const panel = document.getElementById('seed-panel');
+  panel.style.display = 'block';
+  const btn = document.querySelector('[onclick="toggleSeedPanel(this)"]');
+  if (btn) btn.textContent = 'have a seed? ▴';
+}
+
+function closeSeedPanel() {
+  const panel = document.getElementById('seed-panel');
+  panel.style.display = 'none';
+  const btn = document.querySelector('[onclick="toggleSeedPanel(this)"]');
+  if (btn) btn.textContent = 'have a seed? ▾';
+}
+
 function buildDots(filled) {
   const el = document.getElementById('ctrl-dots');
   el.innerHTML = '';
@@ -1520,7 +1550,13 @@ function randomiseSeed() {
 }
 
 function playSeed() {
-  const inp = document.getElementById('seed-input').value.trim();
+  const panel = document.getElementById('seed-panel');
+  const panelOpen = panel.style.display !== 'none';
+  let inp = document.getElementById('seed-input').value.trim();
+  if (!panelOpen) {
+    const n = Math.floor(Math.random() * 9000) + 1000;
+    inp = makeSeedStr(n);
+  }
   if (!parseSeed(inp)) { alert('Invalid seed — try ANVIL-7823'); return; }
   document.getElementById('home-seed-display').textContent = seedStr;
   rng = mulberry32(seedNum);
@@ -2245,33 +2281,21 @@ document.getElementById('history-detail-modal-close').addEventListener('click', 
 
 window.addEventListener('popstate', function() {
   const top = navStack[navStack.length - 1];
-
-  // Always immediately re-push a sentinel so the stack never empties
-  // and the OS never gets the back event.
-  ensureSentinel();
-
   if (!top) {
-    // We're on home
-    if (backPressedOnce) {
-      clearTimeout(backToastTimer);
-      backPressedOnce = false;
-      // User confirmed exit — navigate away cleanly
-      history.go(-history.length);
-      return;
-    }
+    if (backPressedOnce) { clearTimeout(backToastTimer); backPressedOnce = false; return; }
     backPressedOnce = true;
     _showBackToast('Press back again to exit');
     backToastTimer = setTimeout(() => { backPressedOnce = false; }, 2500);
+    ensureSentinel();
     return;
   }
-
   if (top.type === 'modal') {
     const el = document.getElementById(top.id);
     if (el) el.style.display = 'none';
     navStack.pop();
+    ensureSentinel();
     return;
   }
-
   if (top.type === 'screen') {
     if (top.id === 'game' || top.id === 'result') {
       if (backPressedOnce) {
@@ -2281,17 +2305,19 @@ window.addEventListener('popstate', function() {
         if (typeof flashTimer !== 'undefined' && flashTimer) { clearTimeout(flashTimer); flashTimer = null; }
         _origShowScreen('home');
         freshSeedToInput();
+        ensureSentinel();
         return;
       }
       backPressedOnce = true;
       _showBackToast('Press back again to go to menu');
       backToastTimer = setTimeout(() => { backPressedOnce = false; }, 2500);
+      ensureSentinel();
       return;
     }
-    // end screen → single back goes home
     navStack.length = 0;
     _origShowScreen('home');
     freshSeedToInput();
+    ensureSentinel();
     return;
   }
 });
