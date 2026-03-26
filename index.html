@@ -797,7 +797,10 @@ html, body {
     border-top: 0.5px solid var(--line);
     padding: 14px 16px calc(16px + env(safe-area-inset-bottom));
     overflow: visible;
+    display: flex;
+    flex-direction: column;
   }
+  #lock-btn { margin-top: auto; }
   .ctrl-wordmark { display: none; }
   .ctrl-preview { display: none; }
   .ctrl-seed-label { font-size: 11px; }
@@ -808,9 +811,9 @@ html, body {
   .slider-row { gap: 12px; }
   .slider-axis { font-size: 12px; min-width: 12px; }
   .slider-val { font-size: 15px; min-width: 42px; }
-  .slider-track { height: 14px; border-radius: 7px; }
-  .slider-thumb { width: 26px; height: 26px; border-width: 2px; }
-  .slider-native { height: 44px; }
+  .slider-track { height: 22px; border-radius: 11px; }
+  .slider-thumb { width: 34px; height: 34px; border-width: 2px; }
+  .slider-native { height: 52px; }
   .ctrl-footer { display: none; }
 
   /* ── RESULT ── */
