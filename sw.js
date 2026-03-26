@@ -1,4 +1,4 @@
-const CACHE = 'chromemory-permanent-v9';   // ← Increase this number every time you make changes
+const CACHE = 'chromemory-permanent-v10';   // ← Increase this number every time you make changes
 const BASE_PATH = '/chromemory';
 
 const ASSETS = [
@@ -14,7 +14,7 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', e => {
-  console.log('📦 Installing Chromemory cache v9');
+  console.log('📦 Installing Chromemory cache v10');
   e.waitUntil(
     caches.open(CACHE).then(cache => cache.addAll(ASSETS))
   );
@@ -22,7 +22,7 @@ self.addEventListener('install', e => {
 });
 
 self.addEventListener('activate', e => {
-  console.log('✅ Service worker v9 activated');
+  console.log('✅ Service worker v10 activated');
   e.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
