@@ -2,6 +2,7 @@
   "name": "Chromemory",
   "short_name": "Chromemory",
   "description": "How precisely do you see colours? Test your memory.",
+  "id": "/chromemory/",
   "start_url": "/chromemory/",
   "scope": "/chromemory/",
   "display": "standalone",
@@ -25,11 +26,11 @@
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Chromemory gameplay on desktop"
+      "label": "Chromemory on desktop"
     },
     {
       "src": "/chromemory/screenshot-narrow.png",
-      "sizes": "390x844",
+      "sizes": "1080x1896",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Chromemory on mobile"
