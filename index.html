@@ -119,13 +119,14 @@ html, body {
 
 .diff-btn {
   flex: 1;
-  padding: 10px 0 9px;
+  min-width: 0;
+  padding: 10px 2px 9px;
   background: transparent;
   border: 0.5px solid var(--line2);
   color: var(--mute);
   font-family: var(--mono);
   font-size: 9px;
-  letter-spacing: .14em;
+  letter-spacing: .10em;
   text-transform: uppercase;
   cursor: pointer;
   border-radius: 3px;
@@ -1092,11 +1093,15 @@ c-374 9 -584 55 -812 177 -141 76 -329 320 -247 320 7 0 40 -34 73 -76z m-136
       </svg>
     </div>
 
-    <div class="section-label">Difficulty</div>
-    <div class="diff-row">
-      <button class="diff-btn" onclick="setDiff('easy',this)">Easy<span class="diff-time">4.0 s</span></button>
-      <button class="diff-btn on" onclick="setDiff('medium',this)">Medium<span class="diff-time">2.5 s</span></button>
-      <button class="diff-btn" onclick="setDiff('hard',this)">Hard<span class="diff-time">1.5 s</span></button>
+    <div class="section-label">Mode</div>
+    <div style="position:relative">
+      <div id="daily-countdown" style="display:none;position:absolute;top:-18px;right:0;font-size:9px;letter-spacing:.08em;color:var(--dim);font-family:var(--mono)"></div>
+      <div class="diff-row">
+        <button class="diff-btn" onclick="setDiff('easy',this)">Easy<span class="diff-time">4.0 s</span></button>
+        <button class="diff-btn on" onclick="setDiff('medium',this)">Medium<span class="diff-time">2.5 s</span></button>
+        <button class="diff-btn" onclick="setDiff('hard',this)">Hard<span class="diff-time">1.5 s</span></button>
+        <button class="diff-btn" id="daily-btn" onclick="setDaily(this)">Daily<br>Challenge</button>
+      </div>
     </div>
 
     <div class="seed-field-row">
@@ -1377,10 +1382,12 @@ function showScreen(id) {
 }
 
 function freshSeedToInput() {
+  clearDailyMode();
   const n = Math.floor(Math.random() * 9000) + 1000;
   const s = makeSeedStr(n);
   document.getElementById('seed-input').value = s;
   document.getElementById('home-seed-display').textContent = s;
+  refreshDailyBtn();
 }
 
 function goHome() {
@@ -1388,7 +1395,107 @@ function goHome() {
   showScreen('home');
 }
 
+let isDailyMode = false;
+let dailyCountdownInterval = null;
+
+function getDailyDateKey() {
+  const now = new Date();
+  return `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+}
+
+function getDailySeed() {
+  const n = parseInt(getDailyDateKey()) % 9000 + 1000;
+  return makeSeedStr(n);
+}
+
+function getDailyRecord() {
+  try { return JSON.parse(localStorage.getItem('chromemory_daily') || 'null'); } catch(e) { return null; }
+}
+
+function saveDailyRecord(score) {
+  try { localStorage.setItem('chromemory_daily', JSON.stringify({ date: getDailyDateKey(), score })); } catch(e) {}
+}
+
+function dailyAlreadyPlayed() {
+  const rec = getDailyRecord();
+  return rec && rec.date === getDailyDateKey();
+}
+
+function msUntilMidnight() {
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setHours(24, 0, 0, 0);
+  return midnight - now;
+}
+
+function formatCountdown(ms) {
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  return `resets in ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function startDailyCountdown() {
+  stopDailyCountdown();
+  const el = document.getElementById('daily-countdown');
+  if (!el) return;
+  el.style.display = 'block';
+  function tick() {
+    el.textContent = formatCountdown(msUntilMidnight());
+  }
+  tick();
+  dailyCountdownInterval = setInterval(tick, 1000);
+}
+
+function stopDailyCountdown() {
+  if (dailyCountdownInterval) { clearInterval(dailyCountdownInterval); dailyCountdownInterval = null; }
+  const el = document.getElementById('daily-countdown');
+  if (el) el.style.display = 'none';
+}
+
+function refreshDailyBtn() {
+  const btn = document.getElementById('daily-btn');
+  if (!btn) return;
+  if (dailyAlreadyPlayed()) {
+    const rec = getDailyRecord();
+    btn.innerHTML = `Daily<br>Challenge<span class="diff-time">${Math.round(rec.score)}</span>`;
+    btn.disabled = true;
+    btn.style.opacity = '0.45';
+    btn.style.cursor = 'not-allowed';
+    startDailyCountdown();
+  } else {
+    btn.innerHTML = 'Daily<br>Challenge';
+    btn.disabled = false;
+    btn.style.opacity = '';
+    btn.style.cursor = '';
+    stopDailyCountdown();
+  }
+}
+
+function setDaily(btn) {
+  if (dailyAlreadyPlayed()) return;
+  isDailyMode = true;
+  diff = 'hard';
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  const seed = getDailySeed();
+  document.getElementById('seed-input').value = seed;
+  document.getElementById('home-seed-display').textContent = seed;
+  document.getElementById('seed-input').disabled = true;
+  document.querySelector('.seed-random-btn').style.opacity = '0.3';
+  document.querySelector('.seed-random-btn').style.pointerEvents = 'none';
+}
+
+function clearDailyMode() {
+  isDailyMode = false;
+  document.getElementById('seed-input').disabled = false;
+  document.querySelector('.seed-random-btn').style.opacity = '';
+  document.querySelector('.seed-random-btn').style.pointerEvents = '';
+}
+
 function setDiff(d, btn) {
+  clearDailyMode();
   diff = d;
   document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
@@ -1842,6 +1949,10 @@ function saveToHistory(avg) {
   // Cap at 50 entries
   h = h.slice(0, 50);
   try { localStorage.setItem('chromemory_history', JSON.stringify(h)); } catch(e) {}
+  // Record daily completion if this was a daily game
+  if (isDailyMode) {
+    saveDailyRecord(avg);
+  }
 }
 
 function loadHistory() {
@@ -2075,13 +2186,7 @@ freshSeedToInput();
 
 <script>
 // ── BACK BUTTON HANDLING ──
-//
-// Uses a navStack to track screens and modals. Every navigation pushes
-// one sentinel entry into browser history so popstate always fires.
-// On popstate we inspect navStack to decide what to dismiss/go-back-to,
-// then re-push a sentinel so the next back press also fires popstate.
-
-const navStack = [];  // { type: 'screen'|'modal', id: string }
+const navStack = [];
 let backPressedOnce = false;
 let backToastTimer  = null;
 
@@ -2089,19 +2194,13 @@ function ensureSentinel() {
   window.history.pushState({ sentinel: true }, '');
 }
 
-// ── Patch showScreen ──
 const _origShowScreen = showScreen;
 showScreen = function(id) {
   _origShowScreen(id);
-  if (id === 'home') {
-    navStack.length = 0;
-  } else {
-    navStack.push({ type: 'screen', id });
-  }
+  if (id === 'home') { navStack.length = 0; } else { navStack.push({ type: 'screen', id }); }
   ensureSentinel();
 };
 
-// ── Patch openHistory ──
 const _origOpenHistory = openHistory;
 openHistory = function() {
   _origOpenHistory();
@@ -2109,7 +2208,6 @@ openHistory = function() {
   ensureSentinel();
 };
 
-// ── Patch openDetail ──
 const _origOpenDetail = openDetail;
 openDetail = function(i) {
   _origOpenDetail(i);
@@ -2117,7 +2215,6 @@ openDetail = function(i) {
   ensureSentinel();
 };
 
-// ── Info modal (named fns so inline onclick works) ──
 function openInfoModal() {
   document.getElementById('info-modal').style.display = 'flex';
   navStack.push({ type: 'modal', id: 'info-modal' });
@@ -2125,22 +2222,21 @@ function openInfoModal() {
 }
 function closeInfoModal() {
   document.getElementById('info-modal').style.display = 'none';
-  // Remove from stack if it's the top entry
-  if (navStack.length && navStack[navStack.length - 1].id === 'info-modal') {
-    navStack.pop();
-  }
+  if (navStack.length && navStack[navStack.length - 1].id === 'info-modal') navStack.pop();
 }
 
-// ── Patch modal close buttons to keep navStack in sync ──
-// history-modal × button and backdrop click
+function _closeModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = 'none';
+  while (navStack.length && navStack[navStack.length - 1].id === id) navStack.pop();
+}
+
 document.getElementById('history-modal').addEventListener('click', function(e) {
   if (e.target === this) _closeModal('history-modal');
 });
 document.getElementById('history-modal-close').addEventListener('click', function() {
   _closeModal('history-modal');
 });
-
-// history-detail-modal × button and backdrop click
 document.getElementById('history-detail-modal').addEventListener('click', function(e) {
   if (e.target === this) _closeModal('history-detail-modal');
 });
@@ -2148,26 +2244,11 @@ document.getElementById('history-detail-modal-close').addEventListener('click', 
   _closeModal('history-detail-modal');
 });
 
-function _closeModal(id) {
-  const el = document.getElementById(id);
-  if (el) el.style.display = 'none';
-  // Pop this modal (and anything stacked above it) from navStack
-  while (navStack.length && navStack[navStack.length - 1].id === id) {
-    navStack.pop();
-  }
-}
-
-// ── Central popstate handler ──
 window.addEventListener('popstate', function() {
   const top = navStack[navStack.length - 1];
 
   if (!top) {
-    // On home — double-press to exit
-    if (backPressedOnce) {
-      clearTimeout(backToastTimer);
-      backPressedOnce = false;
-      return; // allow OS to close/background
-    }
+    if (backPressedOnce) { clearTimeout(backToastTimer); backPressedOnce = false; return; }
     backPressedOnce = true;
     _showBackToast('Press back again to exit');
     backToastTimer = setTimeout(() => { backPressedOnce = false; }, 2500);
@@ -2185,16 +2266,11 @@ window.addEventListener('popstate', function() {
 
   if (top.type === 'screen') {
     if (top.id === 'game' || top.id === 'result') {
-      // Mid-game: double-press to go home
       if (backPressedOnce) {
         clearTimeout(backToastTimer);
         backPressedOnce = false;
         navStack.length = 0;
-        // Cancel any running flash timer
-        if (typeof flashTimer !== 'undefined' && flashTimer) {
-          clearTimeout(flashTimer);
-          flashTimer = null;
-        }
+        if (typeof flashTimer !== 'undefined' && flashTimer) { clearTimeout(flashTimer); flashTimer = null; }
         _origShowScreen('home');
         freshSeedToInput();
         ensureSentinel();
@@ -2206,8 +2282,6 @@ window.addEventListener('popstate', function() {
       ensureSentinel();
       return;
     }
-
-    // end screen → single back goes home
     navStack.length = 0;
     _origShowScreen('home');
     freshSeedToInput();
@@ -2216,49 +2290,32 @@ window.addEventListener('popstate', function() {
   }
 });
 
-// ── Toast ──
 function _showBackToast(msg) {
   let toast = document.getElementById('back-toast');
   if (!toast) {
     toast = document.createElement('div');
     toast.id = 'back-toast';
     toast.style.cssText = [
-      'position:fixed',
-      'bottom:calc(env(safe-area-inset-bottom,0px) + 28px)',
-      'left:50%',
-      'transform:translateX(-50%) translateY(12px)',
-      'background:var(--bg4)',
-      'border:0.5px solid var(--line2)',
-      'color:var(--sub)',
-      'font-family:var(--mono)',
-      'font-size:10px',
-      'letter-spacing:.12em',
-      'text-transform:uppercase',
-      'padding:9px 18px',
-      'border-radius:4px',
-      'z-index:9999',
-      'opacity:0',
-      'transition:opacity .2s,transform .2s',
-      'white-space:nowrap',
-      'pointer-events:none',
+      'position:fixed','bottom:calc(env(safe-area-inset-bottom,0px) + 28px)','left:50%',
+      'transform:translateX(-50%) translateY(12px)','background:var(--bg4)',
+      'border:0.5px solid var(--line2)','color:var(--sub)','font-family:var(--mono)',
+      'font-size:10px','letter-spacing:.12em','text-transform:uppercase','padding:9px 18px',
+      'border-radius:4px','z-index:9999','opacity:0','transition:opacity .2s,transform .2s',
+      'white-space:nowrap','pointer-events:none',
     ].join(';');
     document.body.appendChild(toast);
   }
   toast.textContent = msg;
-  requestAnimationFrame(() => {
-    toast.style.opacity = '1';
-    toast.style.transform = 'translateX(-50%) translateY(0)';
-  });
+  requestAnimationFrame(() => { toast.style.opacity = '1'; toast.style.transform = 'translateX(-50%) translateY(0)'; });
   clearTimeout(toast._hideTimer);
-  toast._hideTimer = setTimeout(() => {
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateX(-50%) translateY(12px)';
-  }, 2200);
+  toast._hideTimer = setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(-50%) translateY(12px)'; }, 2200);
 }
 
-// ── Init ──
 window.history.replaceState({ base: true }, '');
 ensureSentinel();
+
+// Init daily button state on load
+refreshDailyBtn();
 </script>
 
 <script>
