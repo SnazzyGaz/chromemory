@@ -1,9 +1,11 @@
 # Chromemory
 
+![Chromemory Header](https://raw.githubusercontent.com/SnazzyGaz/chromemory/main/rdhead.png)
+
 A fun and challenging colour memory test.  
 How precisely can you remember and recreate colours?
 
-![Chromemory Preview](https://raw.githubusercontent.com/SnazzyGaz/chromemory/refs/heads/main/icon-512.png)
+![Chromemory Preview](https://raw.githubusercontent.com/SnazzyGaz/chromemory/main/icon-512.png)
 
 ## 🎮 How to Play
 
@@ -29,21 +31,12 @@ Every game is defined by a **seed** (e.g. `ANVIL-7823`). Share the seed with fri
 
 ## 📱 Install as App
 
-**On Android / Desktop Chrome:**  
-Open the site → tap the three dots menu → **Install app**
+**On Android / Desktop (Chrome/Edge):**  
+Open the site → click the install icon in the address bar (or three-dot menu → **Install app**)
 
 **On iPhone / iPad (Safari):**  
 Open the site → tap the Share button → **Add to Home Screen**
 
 ## 🛠️ Tech Stack
 
-- Pure HTML, CSS, and JavaScript (no frameworks)
-- Service Worker for offline support and caching
-- Web App Manifest for PWA features
-- Hosted on **GitHub Pages**
-
-## 📄 License
-
-This project is open source and free to use. Feel free to fork it, improve it, or use it.
-
-Made as a fun personal project to test colour memory and PWA capabilities, inspired by dialed.gg.
+- Pure HTML, CSS, and JavaScript (
