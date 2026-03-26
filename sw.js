@@ -1,5 +1,4 @@
-const CACHE = 'chromemory-permanent-v5';   // ← bump version when you make changes
-
+const CACHE = 'chromemory-permanent-v6';   // ← Increase this number every time you make changes
 const BASE_PATH = '/chromemory';
 
 const ASSETS = [
@@ -9,19 +8,21 @@ const ASSETS = [
   `${BASE_PATH}/sw.js`,
   `${BASE_PATH}/icon-192.png`,
   `${BASE_PATH}/icon-512.png`,
+  `${BASE_PATH}/screenshot-wide.png`,
+  `${BASE_PATH}/screenshot-narrow.png`,
   'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap'
 ];
 
 self.addEventListener('install', e => {
-  console.log('📦 Installing Chromemory cache v5');
+  console.log('📦 Installing Chromemory cache v6');
   e.waitUntil(
     caches.open(CACHE).then(cache => cache.addAll(ASSETS))
   );
-  self.skipWaiting();
+  self.skipWaiting();   // Activate immediately
 });
 
 self.addEventListener('activate', e => {
-  console.log('✅ Service worker v5 activated');
+  console.log('✅ Service worker v6 activated');
   e.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
@@ -31,30 +32,34 @@ self.addEventListener('activate', e => {
   );
 });
 
+// Improved fetch handler with network-first for important files
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
-  // Skip requests that don't belong to our app (e.g. chrome-extension, other domains)
+  // Only handle our own requests
   if (!url.origin.includes('snazzygaz.github.io') && 
       !url.href.startsWith('https://fonts.googleapis.com')) {
     return;
   }
 
-  // Network-first for HTML navigation
-  if (e.request.mode === 'navigate' || url.pathname.endsWith('.html')) {
+  // Network-first strategy for HTML and manifest (so updates are picked up quickly)
+  if (e.request.mode === 'navigate' || 
+      url.pathname.endsWith('.html') || 
+      url.pathname.endsWith('manifest.json')) {
+    
     e.respondWith(
       fetch(e.request)
-        .then(res => {
-          const clone = res.clone();
+        .then(response => {
+          const clone = response.clone();
           caches.open(CACHE).then(cache => cache.put(e.request, clone));
-          return res;
+          return response;
         })
-        .catch(() => caches.match(`${BASE_PATH}/index.html`))
+        .catch(() => caches.match(e.request) || caches.match(`${BASE_PATH}/index.html`))
     );
     return;
   }
 
-  // Cache-first for static assets
+  // Cache-first for everything else (fast + offline support)
   e.respondWith(
     caches.match(e.request)
       .then(cached => cached || fetch(e.request))
