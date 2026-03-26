@@ -1,4 +1,4 @@
-const CACHE = 'chromemory-permanent-v7';   // ← Increase this number every time you make changes
+const CACHE = 'chromemory-permanent-v8';   // ← Increase this number every time you make changes
 const BASE_PATH = '/chromemory';
 
 const ASSETS = [
