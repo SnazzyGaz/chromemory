@@ -1159,7 +1159,9 @@ c-374 9 -584 55 -812 177 -141 76 -329 320 -247 320 7 0 40 -34 73 -76z m-136
     </div>
     <div id="seed-panel" style="display:none;margin-bottom:6px">
       <div class="seed-field-row">
-        <input type="text" id="seed-input" placeholder="e.g. SLATE-1426" maxlength="14"
+        <input type="search" id="seed-input" placeholder="e.g. SLATE-1426" maxlength="14"
+          autocomplete="off" autocorrect="off" autocapitalize="characters"
+          spellcheck="false" role="searchbox"
           oninput="this.value=this.value.toUpperCase()"
           onkeydown="if(event.key==='Enter')playSeed()">
         <button class="seed-random-btn" onclick="randomiseSeed()" title="Random seed">&#8645;</button>
