@@ -1098,7 +1098,7 @@ c-374 9 -584 55 -812 177 -141 76 -329 320 -247 320 7 0 40 -34 73 -76z m-136
       <div id="daily-countdown" style="display:none;position:absolute;top:-18px;right:0;font-size:9px;letter-spacing:.08em;color:var(--dim);font-family:var(--mono)"></div>
       <div class="diff-row">
         <button class="diff-btn" onclick="setDiff('easy',this)">Easy<span class="diff-time">4.0 s</span></button>
-        <button class="diff-btn on" onclick="setDiff('medium',this)">Medium<span class="diff-time">2.5 s</span></button>
+        <button class="diff-btn on" id="medium-btn" onclick="setDiff('medium',this)">Medium<span class="diff-time">2.5 s</span></button>
         <button class="diff-btn" onclick="setDiff('hard',this)">Hard<span class="diff-time">1.5 s</span></button>
         <button class="diff-btn" id="daily-btn" onclick="setDaily(this)">Daily<br>Challenge</button>
       </div>
@@ -1383,6 +1383,10 @@ function showScreen(id) {
 
 function freshSeedToInput() {
   clearDailyMode();
+  // Always return highlight to medium
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('on'));
+  const medBtn = document.getElementById('medium-btn');
+  if (medBtn) { medBtn.classList.add('on'); diff = 'medium'; }
   const n = Math.floor(Math.random() * 9000) + 1000;
   const s = makeSeedStr(n);
   document.getElementById('seed-input').value = s;
@@ -1441,9 +1445,7 @@ function startDailyCountdown() {
   const el = document.getElementById('daily-countdown');
   if (!el) return;
   el.style.display = 'block';
-  function tick() {
-    el.textContent = formatCountdown(msUntilMidnight());
-  }
+  function tick() { el.textContent = formatCountdown(msUntilMidnight()); }
   tick();
   dailyCountdownInterval = setInterval(tick, 1000);
 }
@@ -1459,7 +1461,7 @@ function refreshDailyBtn() {
   if (!btn) return;
   if (dailyAlreadyPlayed()) {
     const rec = getDailyRecord();
-    btn.innerHTML = `Daily<br>Challenge<span class="diff-time">${Math.round(rec.score)}</span>`;
+    btn.innerHTML = `Daily<br>Challenge<span class="diff-time">score: ${Math.round(rec.score)}</span>`;
     btn.disabled = true;
     btn.style.opacity = '0.45';
     btn.style.cursor = 'not-allowed';
@@ -1946,13 +1948,9 @@ function saveToHistory(avg) {
   };
   let h = loadHistory();
   h.unshift(entry);
-  // Cap at 50 entries
   h = h.slice(0, 50);
   try { localStorage.setItem('chromemory_history', JSON.stringify(h)); } catch(e) {}
-  // Record daily completion if this was a daily game
-  if (isDailyMode) {
-    saveDailyRecord(avg);
-  }
+  if (isDailyMode) saveDailyRecord(avg);
 }
 
 function loadHistory() {
@@ -2246,7 +2244,6 @@ document.getElementById('history-detail-modal-close').addEventListener('click', 
 
 window.addEventListener('popstate', function() {
   const top = navStack[navStack.length - 1];
-
   if (!top) {
     if (backPressedOnce) { clearTimeout(backToastTimer); backPressedOnce = false; return; }
     backPressedOnce = true;
@@ -2255,7 +2252,6 @@ window.addEventListener('popstate', function() {
     ensureSentinel();
     return;
   }
-
   if (top.type === 'modal') {
     const el = document.getElementById(top.id);
     if (el) el.style.display = 'none';
@@ -2263,7 +2259,6 @@ window.addEventListener('popstate', function() {
     ensureSentinel();
     return;
   }
-
   if (top.type === 'screen') {
     if (top.id === 'game' || top.id === 'result') {
       if (backPressedOnce) {
@@ -2313,8 +2308,6 @@ function _showBackToast(msg) {
 
 window.history.replaceState({ base: true }, '');
 ensureSentinel();
-
-// Init daily button state on load
 refreshDailyBtn();
 </script>
 
