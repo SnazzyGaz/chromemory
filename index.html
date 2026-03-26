@@ -2348,10 +2348,87 @@ ensureSentinel();
 refreshDailyBtn();
 </script>
 
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js');
+<style>
+#update-fab {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.5);
+  border: none;
+  color: var(--bg);
+  font-size: 15px;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .15s;
 }
+#update-fab:hover { background: rgba(255,255,255,0.75); }
+#update-fab:active { background: rgba(255,255,255,0.9); }
+#update-fab.visible { display: flex; }
+</style>
+
+<button id="update-fab" title="Update available">
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5c1.8 0 3.4.87 4.4 2.2"/>
+    <polyline points="10.5 2 13 4.5 10.5 7"/>
+  </svg>
+</button>
+
+<script>
+(function () {
+  const fab = document.getElementById('update-fab');
+  let pendingWorker = null;
+
+  function showFab() {
+    // Only show when home screen is active
+    if (document.getElementById('home').classList.contains('active')) {
+      fab.classList.add('visible');
+    }
+  }
+
+  // Hook into showScreen so the button tracks the active screen
+  const _origShowScreen2 = showScreen;
+  showScreen = function(id) {
+    _origShowScreen2(id);
+    if (fab.classList.contains('visible')) {
+      fab.style.display = id === 'home' ? 'flex' : 'none';
+    }
+  };
+
+  fab.addEventListener('click', function () {
+    if (pendingWorker) {
+      pendingWorker.postMessage({ type: 'SKIP_WAITING' });
+    } else {
+      window.location.reload();
+    }
+  });
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').then(function (reg) {
+      reg.addEventListener('updatefound', function () {
+        const nw = reg.installing;
+        nw.addEventListener('statechange', function () {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+            pendingWorker = nw;
+            showFab();
+          }
+        });
+      });
+      reg.update();
+      setInterval(function () { reg.update(); }, 60000);
+    });
+
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      window.location.reload();
+    });
+  }
+})();
 </script>
 </body>
 </html>
