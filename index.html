@@ -125,7 +125,8 @@ html, body {
   border: 0.5px solid var(--line2);
   color: var(--mute);
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 11px;
+  font-weight: 500;
   letter-spacing: .10em;
   text-transform: uppercase;
   cursor: pointer;
@@ -134,21 +135,23 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 4px;
 }
-.diff-time { font-size: 8px; color: var(--dim); letter-spacing: .06em; }
+.diff-time { font-size: 10px; color: var(--dim); letter-spacing: .06em; font-weight: 400; }
 .diff-btn:hover { border-color: var(--mute); color: var(--sub); }
 .diff-btn.on { background: var(--white); color: var(--bg); border-color: var(--white); }
 .diff-btn.on .diff-time { color: var(--bg3); }
 
 .primary-btn {
   width: 100%;
-  padding: 12px;
+  padding: 13px;
   background: var(--white);
   border: none;
   color: var(--bg);
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 12px;
+  font-weight: 500;
   letter-spacing: .2em;
   text-transform: uppercase;
   cursor: pointer;
@@ -160,12 +163,13 @@ html, body {
 
 .ghost-btn {
   width: 100%;
-  padding: 11px;
+  padding: 12px;
   background: transparent;
   border: 0.5px solid var(--line2);
   color: var(--sub);
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 12px;
+  font-weight: 500;
   letter-spacing: .15em;
   text-transform: uppercase;
   cursor: pointer;
@@ -374,6 +378,7 @@ html, body {
   border-left: 0.5px solid var(--line);
   display: flex;
   flex-direction: column;
+  justify-content: center;
   padding: 22px 18px;
   overflow-y: auto;
 }
@@ -1876,7 +1881,17 @@ function lockGuess() {
   const sh = axScore(dh, 90 * darkMult * lowSatMult * greyMult);
   const ss = axScore(ds, 50 * darkMult);
   const sb = axScore(db, 50);
-  const tot = sh * 0.5 + ss * 0.3 + sb * 0.2;
+
+  // Dynamic weights — below 40% saturation, hue weight transfers to saturation.
+  // At S=40%: wH=0.50, wS=0.30. At S=0%: wH=0.15, wS=0.65.
+  const SAT_THRESHOLD = 40;
+  const satFactor = Math.max(0, Math.min(1, (SAT_THRESHOLD - tc.s) / SAT_THRESHOLD)); // 0 at S>=40, 1 at S=0
+  const transferH = 0.35 * Math.pow(satFactor, 1.5); // up to 0.35 transfers from hue
+  const wH = 0.50 - transferH;
+  const wS = 0.30 + transferH;
+  const wB = 0.20;
+
+  const tot = sh * wH + ss * wS + sb * wB;
 
   scores.push(tot);
   history.push({ t: { ...tc }, g: { h: gh, s: gs, b: gb }, sh, ss, sb, tot, dh, ds, db });
