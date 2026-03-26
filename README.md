@@ -5,8 +5,6 @@
 A fun and challenging colour memory test.  
 How precisely can you remember and recreate colours?
 
-![Chromemory Preview](https://raw.githubusercontent.com/SnazzyGaz/chromemory/main/icon-512.png)
-
 ## 🎮 How to Play
 
 1. Choose your difficulty (Easy / Medium / Hard)
@@ -39,4 +37,13 @@ Open the site → tap the Share button → **Add to Home Screen**
 
 ## 🛠️ Tech Stack
 
-- Pure HTML, CSS, and JavaScript (
+- Pure HTML, CSS, and JavaScript (no frameworks)
+- Service Worker for offline support and caching
+- Web App Manifest for PWA features
+- Hosted on **GitHub Pages**
+
+## 📄 License
+
+This project is open source and free to use. Feel free to fork it, improve it, or use it.
+
+Made as a fun personal project to test colour memory and PWA capabilities, inspired by dialed.gg.
