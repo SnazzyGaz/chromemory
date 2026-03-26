@@ -247,6 +247,52 @@ html, body {
   line-height: 1.6;
 }
 
+/* ── UPDATE BUTTON ── */
+#update-btn {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: transparent;
+  border: 0.5px solid var(--line2);
+  color: var(--mute);
+  font-family: var(--mono);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+  z-index: 10;
+  line-height: 1;
+}
+#update-btn:hover { border-color: var(--mute); color: var(--sub); }
+#update-btn.checking { animation: upd-spin 1s linear infinite; }
+#update-btn.up-to-date { color: var(--dim); }
+#update-btn.has-update { border-color: #7ec8a0; color: #7ec8a0; }
+
+/* green dot badge */
+#update-btn::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #7ec8a0;
+  border: 1.5px solid var(--bg);
+  display: none;
+}
+#update-btn.has-update::after { display: block; }
+
+@keyframes upd-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
 /* ── GAME ── */
 #game { flex-direction: row; }
 
@@ -848,6 +894,8 @@ html, body {
   <div class="home-inner">
 
     <button onclick="openInfoModal()" style="position:absolute;top:16px;right:16px;width:28px;height:28px;border-radius:50%;background:transparent;border:0.5px solid var(--line2);color:var(--mute);font-family:var(--mono);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;z-index:10" onmouseover="this.style.borderColor='var(--mute)';this.style.color='var(--sub)'" onmouseout="this.style.borderColor='var(--line2)';this.style.color='var(--mute)'">?</button>
+
+    <button id="update-btn" title="Check for updates" onclick="checkForUpdate(true)">↑</button>
 
     <div class="home-hero">
       <div class="home-hero-text">
@@ -2220,6 +2268,9 @@ freshSeedToInput();
 </div>
 
 <script>
+// ── VERSION ──
+const CURRENT_VERSION = '1.0.0';
+
 // ── BACK BUTTON HANDLING ──
 const navStack = [];
 let backPressedOnce = false;
@@ -2348,87 +2399,106 @@ ensureSentinel();
 refreshDailyBtn();
 </script>
 
-<style>
-#update-fab {
-  position: fixed;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
-  right: 14px;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.5);
-  border: none;
-  color: var(--bg);
-  font-size: 15px;
-  cursor: pointer;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 9998;
-  -webkit-tap-highlight-color: transparent;
-  transition: background .15s;
-}
-#update-fab:hover { background: rgba(255,255,255,0.75); }
-#update-fab:active { background: rgba(255,255,255,0.9); }
-#update-fab.visible { display: flex; }
-</style>
-
-<button id="update-fab" title="Update available">
-  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5c1.8 0 3.4.87 4.4 2.2"/>
-    <polyline points="10.5 2 13 4.5 10.5 7"/>
-  </svg>
-</button>
-
 <script>
-(function () {
-  const fab = document.getElementById('update-fab');
-  let pendingWorker = null;
+// ── UPDATE CHECK ──
+const UPDATE_VERSION_URL = 'https://snazzygaz.github.io/chromemory/version.json';
 
-  function showFab() {
-    // Only show when home screen is active
-    if (document.getElementById('home').classList.contains('active')) {
-      fab.classList.add('visible');
+async function checkForUpdate(manual = false) {
+  const btn = document.getElementById('update-btn');
+  if (!btn || btn.classList.contains('checking')) return;
+
+  btn.classList.add('checking');
+  btn.title = 'Checking…';
+
+  try {
+    const res = await fetch(UPDATE_VERSION_URL + '?t=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) throw new Error('not ok');
+    const data = await res.json();
+    const latest = (data.version || '').trim();
+
+    btn.classList.remove('checking');
+
+    if (latest && latest !== CURRENT_VERSION) {
+      btn.classList.add('has-update');
+      btn.title = `Update available — tap to refresh`;
+      // Make subsequent clicks reload the page
+      btn.onclick = () => window.location.reload(true);
+      _showUpdateToast(`Update available — v${latest} · tap ↑ to refresh`, true);
+    } else {
+      btn.classList.remove('checking');
+      btn.title = 'Up to date';
+      if (manual) _showUpdateToast('Already up to date ✓', false);
+      setTimeout(() => {
+        if (!btn.classList.contains('has-update')) {
+          btn.title = 'Check for updates';
+        }
+      }, 3000);
     }
+  } catch (e) {
+    btn.classList.remove('checking');
+    btn.title = 'Check for updates';
+    if (manual) _showUpdateToast('Could not reach update server', false);
+  }
+}
+
+function _showUpdateToast(msg, isUpdate) {
+  let toast = document.getElementById('update-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'update-toast';
+    toast.style.cssText = [
+      'position:fixed',
+      'bottom:calc(env(safe-area-inset-bottom,0px) + 28px)',
+      'left:50%',
+      'transform:translateX(-50%) translateY(12px)',
+      'background:var(--bg4)',
+      'border:0.5px solid var(--line2)',
+      'color:var(--sub)',
+      'font-family:var(--mono)',
+      'font-size:10px',
+      'letter-spacing:.12em',
+      'text-transform:uppercase',
+      'padding:9px 18px',
+      'border-radius:4px',
+      'z-index:9999',
+      'opacity:0',
+      'transition:opacity .2s,transform .2s',
+      'white-space:nowrap',
+      'pointer-events:none',
+      'display:flex',
+      'align-items:center',
+      'gap:8px',
+    ].join(';');
+    document.body.appendChild(toast);
   }
 
-  // Hook into showScreen so the button tracks the active screen
-  const _origShowScreen2 = showScreen;
-  showScreen = function(id) {
-    _origShowScreen2(id);
-    if (fab.classList.contains('visible')) {
-      fab.style.display = id === 'home' ? 'flex' : 'none';
-    }
-  };
+  toast.innerHTML = isUpdate
+    ? `<span style="width:6px;height:6px;border-radius:50%;background:#7ec8a0;flex-shrink:0;display:inline-block"></span>${msg}`
+    : msg;
 
-  fab.addEventListener('click', function () {
-    if (pendingWorker) {
-      pendingWorker.postMessage({ type: 'SKIP_WAITING' });
-    } else {
-      window.location.reload();
-    }
+  requestAnimationFrame(() => {
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateX(-50%) translateY(0)';
   });
 
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').then(function (reg) {
-      reg.addEventListener('updatefound', function () {
-        const nw = reg.installing;
-        nw.addEventListener('statechange', function () {
-          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-            pendingWorker = nw;
-            showFab();
-          }
-        });
-      });
-      reg.update();
-      setInterval(function () { reg.update(); }, 60000);
-    });
+  clearTimeout(toast._hideTimer);
+  toast._hideTimer = setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(-50%) translateY(12px)';
+  }, isUpdate ? 5000 : 2200);
+}
 
-    navigator.serviceWorker.addEventListener('controllerchange', function () {
-      window.location.reload();
-    });
-  }
-})();
+// Silent background check on load
+window.addEventListener('load', () => {
+  setTimeout(() => checkForUpdate(false), 1500);
+});
+</script>
+
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
 </script>
 </body>
 </html>
