@@ -1630,7 +1630,12 @@ function buildDots(filled) {
 
 // ── GAME FLOW ──
 function randomiseSeed() {
-  freshSeedToInput();
+  clearDailyMode();
+  const n = Math.floor(Math.random() * 9000) + 1000;
+  const s = makeSeedStr(n);
+  document.getElementById('seed-input').value = s;
+  document.getElementById('home-seed-display').textContent = s;
+  refreshDailyBtn();
 }
 
 function playSeed() {
