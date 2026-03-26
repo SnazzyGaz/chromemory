@@ -172,6 +172,7 @@ html, body {
   border-radius: 3px;
   transition: all .15s;
   margin-bottom: 7px;
+  -webkit-tap-highlight-color: transparent;
 }
 .ghost-btn:hover { border-color: var(--mute); color: var(--text); }
 
@@ -1461,7 +1462,7 @@ function refreshDailyBtn() {
   if (!btn) return;
   if (dailyAlreadyPlayed()) {
     const rec = getDailyRecord();
-    btn.innerHTML = `Daily<br>Challenge<span class="diff-time">score: ${Math.round(rec.score)}</span>`;
+    btn.innerHTML = `Daily<br>Challenge<span class="diff-time" style="color:var(--white);font-weight:500">score: ${rec.score.toFixed(2)}</span>`;
     btn.disabled = true;
     btn.style.opacity = '0.45';
     btn.style.cursor = 'not-allowed';
@@ -2244,21 +2245,33 @@ document.getElementById('history-detail-modal-close').addEventListener('click', 
 
 window.addEventListener('popstate', function() {
   const top = navStack[navStack.length - 1];
+
+  // Always immediately re-push a sentinel so the stack never empties
+  // and the OS never gets the back event.
+  ensureSentinel();
+
   if (!top) {
-    if (backPressedOnce) { clearTimeout(backToastTimer); backPressedOnce = false; return; }
+    // We're on home
+    if (backPressedOnce) {
+      clearTimeout(backToastTimer);
+      backPressedOnce = false;
+      // User confirmed exit — navigate away cleanly
+      history.go(-history.length);
+      return;
+    }
     backPressedOnce = true;
     _showBackToast('Press back again to exit');
     backToastTimer = setTimeout(() => { backPressedOnce = false; }, 2500);
-    ensureSentinel();
     return;
   }
+
   if (top.type === 'modal') {
     const el = document.getElementById(top.id);
     if (el) el.style.display = 'none';
     navStack.pop();
-    ensureSentinel();
     return;
   }
+
   if (top.type === 'screen') {
     if (top.id === 'game' || top.id === 'result') {
       if (backPressedOnce) {
@@ -2268,20 +2281,17 @@ window.addEventListener('popstate', function() {
         if (typeof flashTimer !== 'undefined' && flashTimer) { clearTimeout(flashTimer); flashTimer = null; }
         _origShowScreen('home');
         freshSeedToInput();
-        ensureSentinel();
         return;
       }
       backPressedOnce = true;
       _showBackToast('Press back again to go to menu');
       backToastTimer = setTimeout(() => { backPressedOnce = false; }, 2500);
-      ensureSentinel();
-      ensureSentinel(); // two sentinels so second tap is caught, not passed to OS
       return;
     }
+    // end screen → single back goes home
     navStack.length = 0;
     _origShowScreen('home');
     freshSeedToInput();
-    ensureSentinel();
     return;
   }
 });
