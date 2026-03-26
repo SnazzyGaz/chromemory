@@ -2268,9 +2268,6 @@ freshSeedToInput();
 </div>
 
 <script>
-// ── VERSION ──
-const CURRENT_VERSION = '1.0.0';
-
 // ── BACK BUTTON HANDLING ──
 const navStack = [];
 let backPressedOnce = false;
@@ -2402,6 +2399,7 @@ refreshDailyBtn();
 <script>
 // ── UPDATE CHECK ──
 const UPDATE_VERSION_URL = 'https://snazzygaz.github.io/chromemory/version.json';
+const LS_KEY = 'chromemory_seen_version';
 
 async function checkForUpdate(manual = false) {
   const btn = document.getElementById('update-btn');
@@ -2411,27 +2409,42 @@ async function checkForUpdate(manual = false) {
   btn.title = 'Checking…';
 
   try {
-    const res = await fetch(UPDATE_VERSION_URL + '?t=' + Date.now(), { cache: 'no-store' });
+    const res = await fetch(UPDATE_VERSION_URL + '?t=' + Date.now(), {
+      cache: 'no-store',
+      mode: 'cors',
+      credentials: 'omit',
+      headers: { 'pragma': 'no-cache', 'cache-control': 'no-cache' }
+    });
     if (!res.ok) throw new Error('not ok');
     const data = await res.json();
     const latest = (data.version || '').trim();
+    if (!latest) throw new Error('no version');
+
+    const seen = localStorage.getItem(LS_KEY);
+
+    // First ever load — just store the version silently, no update prompt
+    if (!seen) {
+      localStorage.setItem(LS_KEY, latest);
+      btn.classList.remove('checking');
+      btn.title = 'Check for updates';
+      return;
+    }
 
     btn.classList.remove('checking');
 
-    if (latest && latest !== CURRENT_VERSION) {
+    if (latest !== seen) {
       btn.classList.add('has-update');
-      btn.title = `Update available — tap to refresh`;
-      // Make subsequent clicks reload the page
-      btn.onclick = () => window.location.reload(true);
+      btn.title = 'Update available — tap to refresh';
+      btn.onclick = () => {
+        localStorage.setItem(LS_KEY, latest);
+        window.location.reload(true);
+      };
       _showUpdateToast(`Update available — v${latest} · tap ↑ to refresh`, true);
     } else {
-      btn.classList.remove('checking');
       btn.title = 'Up to date';
       if (manual) _showUpdateToast('Already up to date ✓', false);
       setTimeout(() => {
-        if (!btn.classList.contains('has-update')) {
-          btn.title = 'Check for updates';
-        }
+        if (!btn.classList.contains('has-update')) btn.title = 'Check for updates';
       }, 3000);
     }
   } catch (e) {
