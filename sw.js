@@ -1,4 +1,4 @@
-const CACHE = 'chromemory-permanent-v10';   // ← Increase this number every time you make changes
+const CACHE = 'chromemory-permanent-v11';   // ← Increase this number every time you make changes
 const BASE_PATH = '/chromemory';
 
 const ASSETS = [
@@ -39,6 +39,11 @@ self.addEventListener('fetch', e => {
   // Only handle our own requests
   if (!url.origin.includes('snazzygaz.github.io') && 
       !url.href.startsWith('https://fonts.googleapis.com')) {
+    return;
+  }
+
+  // Always fetch version.json straight from network — never cache it
+  if (url.pathname.endsWith('version.json')) {
     return;
   }
 
