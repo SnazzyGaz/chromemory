@@ -804,7 +804,20 @@ html, body {
   .sliders { margin-top: auto; }
   .ctrl-footer { display: flex; flex-direction: column; padding-top: 16px; border-top: 0.5px solid var(--line); }
   .ctrl-wordmark { display: none; }
-  .menu-btn { display: inline-block !important; }
+  .menu-btn {
+    display: inline-block !important;
+    background: transparent;
+    border: 0.5px solid var(--line2);
+    color: var(--dim);
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all .15s;
+  }
   .ctrl-preview { display: none; }
   .ctrl-seed-label { font-size: 11px; }
   .ctrl-seed-val { font-size: 13px; }
@@ -850,6 +863,7 @@ html, body {
     flex-direction: column;
   }
   .result-score-big { font-size: 34px; margin-bottom: 2px; margin-top: auto; }
+  #next-btn { margin-bottom: 16px; }
   .result-grade { font-size: 11px; margin-bottom: 10px; }
   .axes-grid { gap: 4px; margin-bottom: 10px; }
   .axis-cell { padding: 7px 5px; }
@@ -1216,13 +1230,12 @@ c-374 9 -584 55 -812 177 -141 76 -329 320 -247 320 7 0 40 -34 73 -76z m-136
   </div>
 
   <div class="ctrl-panel">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px">
-      <div class="ctrl-wordmark" style="margin-bottom:0">Chromemory</div>
-      <button class="menu-btn" onclick="goHome()" style="background:transparent;border:0.5px solid var(--line2);color:var(--dim);font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;padding:5px 10px;border-radius:3px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--mute)';this.style.color='var(--sub)'" onmouseout="this.style.borderColor='var(--line2)';this.style.color='var(--dim)'">Menu</button>
-    </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div class="ctrl-dots" id="ctrl-dots" style="margin-bottom:0"></div>
-      <span id="stage-round" style="font-size:9px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase">Round 01 / 05</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span id="stage-round" style="font-size:9px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase">Round 01 / 05</span>
+        <button class="menu-btn" onclick="goHome()">Menu</button>
+      </div>
     </div>
     <div class="section-label" id="ctrl-mode-label">Memorise</div>
     <div class="ctrl-preview" id="ctrl-preview">
@@ -1282,9 +1295,9 @@ c-374 9 -584 55 -812 177 -141 76 -329 320 -247 320 7 0 40 -34 73 -76z m-136
   </div>
 
   <div class="result-panel">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div class="ctrl-wordmark" style="margin-bottom:0">Round <span id="res-rn">01</span> / 05</div>
-      <button class="menu-btn" onclick="goHome()" style="background:transparent;border:0.5px solid var(--line2);color:var(--dim);font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;padding:5px 10px;border-radius:3px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--mute)';this.style.color='var(--sub)'" onmouseout="this.style.borderColor='var(--line2)';this.style.color='var(--dim)'">Menu</button>
+      <button class="menu-btn" onclick="goHome()">Menu</button>
     </div>
     <div class="result-score-big" id="res-score">—</div>
     <div class="result-grade" id="res-grade">—</div>
