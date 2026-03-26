@@ -1423,8 +1423,9 @@ function axScore(d, range) {
 }
 
 // ── SEEDS ──
-function makeSeedStr(n) {
+function makeSeedStr() {
   const wordIndex = Math.floor(Math.random() * WORDS.length);
+  const n = Math.floor(Math.random() * 9000) + 1000;
   return WORDS[wordIndex] + '-' + String(n).padStart(4, '0');
 }
 
@@ -1477,8 +1478,7 @@ function freshSeedToInput() {
   document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('on'));
   const medBtn = document.getElementById('medium-btn');
   if (medBtn) { medBtn.classList.add('on'); diff = 'medium'; }
-  const n = Math.floor(Math.random() * 9000) + 1000;
-  const s = makeSeedStr(n);
+  const s = makeSeedStr();
   document.getElementById('seed-input').value = s;
   document.getElementById('home-seed-display').textContent = s;
   refreshDailyBtn();
@@ -1631,8 +1631,7 @@ function buildDots(filled) {
 // ── GAME FLOW ──
 function randomiseSeed() {
   clearDailyMode();
-  const n = Math.floor(Math.random() * 9000) + 1000;
-  const s = makeSeedStr(n);
+  const s = makeSeedStr();
   document.getElementById('seed-input').value = s;
   document.getElementById('home-seed-display').textContent = s;
   refreshDailyBtn();
@@ -1643,8 +1642,7 @@ function playSeed() {
   const panelOpen = panel.style.display !== 'none';
   let inp = document.getElementById('seed-input').value.trim();
   if (!panelOpen) {
-    const n = Math.floor(Math.random() * 9000) + 1000;
-    inp = makeSeedStr(n);
+    inp = makeSeedStr();
   }
   if (!parseSeed(inp)) { alert('Invalid seed — try ANVIL-7823'); return; }
   document.getElementById('home-seed-display').textContent = seedStr;
