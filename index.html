@@ -2611,24 +2611,8 @@ async function checkForUpdate(manual = false) {
       btn.classList.add('has-update');
       btn.title = 'Update available — tap to refresh';
       btn.onclick = () => {
-        btn.classList.remove('has-update');
-        btn.classList.add('checking');
-        btn.title = 'Updating…';
         localStorage.setItem(LS_KEY, latest);
-        // Tell service worker to bust cache, then reload once it's done
-        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-          navigator.serviceWorker.controller.postMessage('bust-cache');
-          navigator.serviceWorker.addEventListener('message', function handler(e) {
-            if (e.data === 'cache-busted') {
-              navigator.serviceWorker.removeEventListener('message', handler);
-              window.location.reload();
-            }
-          });
-          // Fallback reload if bust takes too long
-          setTimeout(() => window.location.reload(), 5000);
-        } else {
-          window.location.reload();
-        }
+        window.location.reload(true);
       };
       _showUpdateToast(`Update available — v${latest} · tap ↑ to refresh`, true);
     } else {
