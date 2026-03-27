@@ -414,21 +414,8 @@ html, body {
 }
 .ctrl-dot.on { background: var(--white); }
 
-.ctrl-preview {
-  height: 68px;
-  border-radius: 4px;
-  margin-bottom: 16px;
-  border: 0.5px solid var(--line);
-  transition: background .06s;
-  position: relative;
-}
 .ctrl-preview-label {
-  position: absolute;
-  bottom: 6px; left: 9px;
-  font-size: 8px;
-  letter-spacing: .1em;
-  color: rgba(255,255,255,0.18);
-  text-transform: uppercase;
+  display: none;
 }
 
 .sliders {
@@ -885,7 +872,6 @@ html, body {
     cursor: pointer;
     transition: all .15s;
   }
-  .ctrl-preview { display: none; }
   .ctrl-seed-label { font-size: 11px; }
   .ctrl-seed-val { font-size: 13px; }
   #stage-round { font-size: 11px !important; }
@@ -1307,9 +1293,6 @@ c-374 9 -584 55 -812 177 -141 76 -329 320 -247 320 7 0 40 -34 73 -76z m-136
       </div>
     </div>
     <div class="section-label" id="ctrl-mode-label">Memorise</div>
-    <div class="ctrl-preview" id="ctrl-preview">
-      <div class="ctrl-preview-label">Live preview</div>
-    </div>
     <div class="sliders" id="sliders">
       <div class="slider-row">
         <span class="slider-axis">H</span>
@@ -1787,7 +1770,6 @@ function startRound() {
   const sliders = document.getElementById('sliders');
   sliders.style.opacity = '0.18';
   sliders.style.pointerEvents = 'none';
-  document.getElementById('ctrl-preview').style.background = 'var(--bg3)';
 
   // hide colour during pre-countdown
   document.getElementById('stage-colour').style.background = 'var(--bg2)';
@@ -1875,7 +1857,6 @@ function beginGuess() {
   ['h','s','l'].forEach(a => {
     document.getElementById('track-' + a).style.background = 'var(--line2)';
   });
-  document.getElementById('ctrl-preview').style.background = 'transparent';
 
   const interstitials = ['Remember.', 'Lock it in.', 'Hold that colour.', 'What did you see?', 'Trust your memory.'];
   const msg = interstitials[Math.floor(Math.random() * interstitials.length)];
@@ -1893,7 +1874,7 @@ function beginGuess() {
       cdown.style.letterSpacing = '';
       cdown.style.color = '';
     }, 400);
-    document.getElementById('stage-hint').textContent = window.innerWidth <= 640 ? 'Your guess' : 'Dial in your guess';
+    document.getElementById('stage-hint').textContent = 'Your guess';
     document.getElementById('ctrl-mode-label').textContent = 'Your guess';
     document.getElementById('lock-btn').style.display = 'block';
 
@@ -1959,11 +1940,7 @@ function refreshPreview() {
   const s = +document.getElementById('sl-s').value;
   const l = +document.getElementById('sl-l').value;
   const colour = hsl(h, s, l);
-  document.getElementById('ctrl-preview').style.background = colour;
-  // On mobile, mirror live preview into the stage colour block
-  if (window.innerWidth <= 640) {
-    document.getElementById('stage-colour').style.background = colour;
-  }
+  document.getElementById('stage-colour').style.background = colour;
 }
 
 function countUp(el, from, to, duration, onDone) {
@@ -1988,9 +1965,7 @@ function lockGuess() {
   if (navigator.vibrate) navigator.vibrate(12);
 
   // Reset stage block back to neutral before switching to result screen
-  if (window.innerWidth <= 640) {
-    document.getElementById('stage-colour').style.background = 'var(--bg2)';
-  }
+  document.getElementById('stage-colour').style.background = 'var(--bg2)';
   const gh = +document.getElementById('sl-h').value;
   const gs = +document.getElementById('sl-s').value;
   const gb = +document.getElementById('sl-l').value;
