@@ -1732,7 +1732,7 @@ function playSeed() {
   const panel = document.getElementById('seed-panel');
   const panelOpen = panel.style.display !== 'none';
   let inp = document.getElementById('seed-input').value.trim();
-  if (!panelOpen) {
+  if (!panelOpen && !isDailyMode) {
     inp = makeSeedStr();
   }
   if (!parseSeed(inp)) {
