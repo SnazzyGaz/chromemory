@@ -1370,7 +1370,7 @@ c-374 9 -584 55 -812 177 -141 76 -329 320 -247 320 7 0 40 -34 73 -76z m-136
         <div class="axis-cell-delta" id="ax-ld">—</div>
       </div>
     </div>
-    <button class="primary-btn" id="next-btn" onclick="nextRound()">Next round</button>
+    <button class="primary-btn" id="next-btn">Next round</button>
     <div style="padding-top:16px;border-top:0.5px solid var(--line)">
       <div class="ctrl-seed-label">Seed</div>
       <div class="ctrl-seed-val" id="res-seed-val">—</div>
@@ -1870,7 +1870,7 @@ function startRound() {
   pf.style.transition = 'none';
   pf.style.width = '100%';
 
-  // Show arc overlay, hide stage-meta during pre-countdown
+  // ── Arc pre-countdown (650 ms per phase — arc fills continuously while 3→2→1) ──
   const arcOverlay = document.getElementById('arc-overlay');
   const meta = document.getElementById('stage-meta');
   arcOverlay.style.display = 'flex';
@@ -1883,31 +1883,38 @@ function startRound() {
   let preCount = 3;
   arcNum.textContent = preCount;
   arcTrack.style.transition = 'none';
-  arcTrack.style.strokeDashoffset = '0';
+  arcTrack.style.strokeDashoffset = '0';   // start empty
 
-  if (flashTimer) clearInterval(flashTimer);
+  if (flashTimer) clearTimeout(flashTimer);
 
-  function stepArc() {
-    preCount--;
-    if (preCount <= 0) {
-      // Show 0, sweep to full circle, then hide and reveal colour
-      arcNum.textContent = '0';
-      arcTrack.style.transition = 'stroke-dashoffset 0.7s ease';
-      arcTrack.style.strokeDashoffset = circumference;
-      flashTimer = setTimeout(() => {
-        arcOverlay.style.display = 'none';
-        meta.style.display = '';
-        flashColour(c);
-      }, 750);
-    } else {
+  // Phase 1: show 3 + immediately start filling to 1/3
+  flashTimer = setTimeout(() => {
+    arcTrack.style.transition = 'stroke-dashoffset 0.65s ease';
+    arcTrack.style.strokeDashoffset = (1 / 3) * circumference;
+
+    // At the end of first fill → change to 2 and start next fill
+    flashTimer = setTimeout(() => {
+      preCount = 2;
       arcNum.textContent = preCount;
-      arcTrack.style.transition = 'stroke-dashoffset 0.7s ease';
-      arcTrack.style.strokeDashoffset = ((3 - preCount) / 3) * circumference;
-      flashTimer = setTimeout(stepArc, 800);
-    }
-  }
+      arcTrack.style.transition = 'stroke-dashoffset 0.65s ease';
+      arcTrack.style.strokeDashoffset = (2 / 3) * circumference;
 
-  flashTimer = setTimeout(stepArc, 800);
+      // At the end of second fill → change to 1 and start final sweep
+      flashTimer = setTimeout(() => {
+        preCount = 1;
+        arcNum.textContent = preCount;
+        arcTrack.style.transition = 'stroke-dashoffset 0.65s ease';
+        arcTrack.style.strokeDashoffset = circumference;   // finish while showing 1
+
+        // After final sweep finishes → reveal colour
+        flashTimer = setTimeout(() => {
+          arcOverlay.style.display = 'none';
+          meta.style.display = '';
+          flashColour(c);
+        }, 650);
+      }, 650);
+    }, 650);
+  }, 0);   // start the first fill instantly
 }
 
 function flashColour(c) {
@@ -2048,16 +2055,14 @@ function countUp(el, from, to, duration, onDone) {
 }
 
 function lockGuess() {
-  // 9. Pulse animation on lock button
+  // Pulse + haptic
   const lockBtn = document.getElementById('lock-btn');
   lockBtn.classList.add('lock-pulsing');
   lockBtn.addEventListener('animationend', () => lockBtn.classList.remove('lock-pulsing'), { once: true });
-
-  // 22. Haptic feedback on lock
   if (navigator.vibrate) navigator.vibrate(12);
 
-  // Reset stage block back to neutral before switching to result screen
   document.getElementById('stage-colour').style.background = 'var(--bg2)';
+
   const gh = +document.getElementById('sl-h').value;
   const gs = +document.getElementById('sl-s').value;
   const gb = +document.getElementById('sl-l').value;
@@ -2068,40 +2073,44 @@ function lockGuess() {
   const db = Math.abs(tc.b - gb);
 
   // ── CIEDE2000 scoring ──
-  // Convert both colours to CIE L*a*b* then compute ΔE₀₀.
-  // A single perceptually-uniform distance replaces the old HSB weight juggling.
   const labT = hsbToLab(tc.h, tc.s, tc.b);
   const labG = hsbToLab(gh, gs, gb);
   const de   = ciede2000(labT, labG);
 
-  // Map ΔE₀₀ → 0–100. MAX_DE is the "completely wrong" ceiling (~55 covers the
-  // worst realistic miss in the game's colour space).
-  const MAX_DE = 55;
+  const MAX_DE = 44;
   const tot = Math.max(0, 100 - (de / MAX_DE) * 100);
 
-  // Break ΔE₀₀ into its three perceptual components for the result panel display.
-  // These are the partial terms before the square-root, normalised to 0–100.
   const { sL, sC, sH } = ciede2000Parts(labT, labG);
   const sh = Math.max(0, 100 - (sH / MAX_DE) * 100);
   const ss = Math.max(0, 100 - (sC / MAX_DE) * 100);
   const sb = Math.max(0, 100 - (sL / MAX_DE) * 100);
 
   scores.push(tot);
-  history.push({ t: { ...tc }, g: { h: gh, s: gs, b: gb }, sh, ss, sb, tot, dh, ds, db });
+  history.push({
+    t: { ...tc },
+    g: { h: gh, s: gs, b: gb },
+    sh, ss, sb,
+    tot,
+    deltaH: sH.toFixed(2),
+    deltaC: sC.toFixed(2),
+    deltaL: sL.toFixed(2)
+  });
 
+  // ── Populate result screen ──
   document.getElementById('res-rn').textContent = pad2(round);
   document.getElementById('res-seed-val').textContent = seedStr;
 
-  // Result swatch: instant diagonal split
   const resTgt = document.getElementById('res-target-bg');
   const resGss = document.getElementById('res-guess-bg');
   resTgt.style.background = hsl(tc.h, tc.s, tc.b);
   resGss.style.background = hsl(gh, gs, gb);
 
+  // HSB values on swatches (restored)
   document.getElementById('res-target-vals').innerHTML =
     `<span style="opacity:.45">H</span> ${pad3(tc.h)}°<br>` +
     `<span style="opacity:.45">S</span> ${tc.s.toFixed(1)}%<br>` +
     `<span style="opacity:.45">B</span> ${tc.b.toFixed(1)}%`;
+
   document.getElementById('res-guess-vals').innerHTML =
     `<span style="opacity:.45">H</span> ${pad3(gh)}°<br>` +
     `<span style="opacity:.45">S</span> ${gs.toFixed(1)}%<br>` +
@@ -2118,30 +2127,39 @@ function lockGuess() {
 
   document.getElementById('res-score').textContent = '—';
   document.getElementById('res-grade').textContent = '';
-  document.getElementById('ax-h').textContent = '—';
-  document.getElementById('ax-hd').textContent = '';
-  document.getElementById('ax-s').textContent = '—';
-  document.getElementById('ax-sd').textContent = '';
-  document.getElementById('ax-l').textContent = '—';
-  document.getElementById('ax-ld').textContent = '';
-  document.getElementById('next-btn').textContent = round < 5 ? 'Next round' : 'See final score';
+  const nextBtn = document.getElementById('next-btn');
+nextBtn.textContent = round < 5 ? 'Next round' : 'See final score';
+nextBtn.onclick = nextRound;   // safety re-attach
 
   showScreen('result');
 
-  // count up to score over 800ms then reveal axes
+  // Count-up + final population
   countUp(document.getElementById('res-score'), 0, tot, 800, () => {
     document.getElementById('res-grade').textContent = grade(tot);
+
+    // Perceptual deltas
     document.getElementById('ax-h').textContent = fmt(sh);
-    document.getElementById('ax-hd').textContent = dh + '° off';
+    document.getElementById('ax-hd').textContent = `ΔH′ = ${history[history.length-1].deltaH}`;
     document.getElementById('ax-s').textContent = fmt(ss);
-    document.getElementById('ax-sd').textContent = ds.toFixed(1) + '% off';
+    document.getElementById('ax-sd').textContent = `ΔC′ = ${history[history.length-1].deltaC}`;
     document.getElementById('ax-l').textContent = fmt(sb);
-    document.getElementById('ax-ld').textContent = db.toFixed(1) + '% off';
+    document.getElementById('ax-ld').textContent = `ΔL* = ${history[history.length-1].deltaL}`;
+
+    // Raw ΔE₀₀ — prevent accumulation by removing any previous one first
+    const existing = document.getElementById('res-deltae');
+    if (existing) existing.remove();
+
+    document.getElementById('res-score').insertAdjacentHTML('afterend',
+      `<div id="res-deltae" style="font-size:9px;letter-spacing:.12em;color:var(--dim);margin-top:6px">ΔE₀₀ = ${de.toFixed(2)}</div>`);
   });
 }
 
 function nextRound() {
-  if (round < 5) { startRound(); } else { showEnd(); }
+  if (round < 5) {
+    startRound();
+  } else {
+    showEnd();
+  }
 }
 
 function showEnd() {
@@ -2183,17 +2201,17 @@ function showEnd() {
         <div class="end-row-axis">
           <div class="end-row-axis-label">Hue</div>
           <div class="end-row-axis-val">${fmt(r.sh)}</div>
-          <div class="end-row-axis-delta">${r.dh}° off</div>
+          <div class="end-row-axis-delta">${r.deltaH}° off</div>
         </div>
         <div class="end-row-axis">
           <div class="end-row-axis-label">Sat</div>
           <div class="end-row-axis-val">${fmt(r.ss)}</div>
-          <div class="end-row-axis-delta">${r.ds.toFixed(1)}% off</div>
+          <div class="end-row-axis-delta">${r.deltaC}% off</div>
         </div>
         <div class="end-row-axis">
           <div class="end-row-axis-label">Bri</div>
           <div class="end-row-axis-val">${fmt(r.sb)}</div>
-          <div class="end-row-axis-delta">${r.db.toFixed(1)}% off</div>
+          <div class="end-row-axis-delta">${r.deltaL}% off</div>
         </div>
       </div>
     `;
@@ -2209,7 +2227,6 @@ function showEnd() {
 
   countUp(document.getElementById('end-score'), 0, avg, 1000, () => {
     let gradeText = grade(avg) + ' — avg per round';
-    // 20. Show improvement delta when replaying
     if (previousSeedScore !== null) {
       const delta = avg - previousSeedScore;
       const sign = delta >= 0 ? '+' : '';
