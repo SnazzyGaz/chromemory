@@ -29,7 +29,6 @@ Every game is defined by a **seed** (e.g. `ANVIL-7823`). Share the seed with fri
 ## 🚀 Try It Live
 
 **Main build:** [Play Chromemory](https://snazzygaz.github.io/chromemory/)  
-**Temp / development build:** [https://snazzygaz.github.io/temp/](https://snazzygaz.github.io/temp/)
 
 ## 📱 Install as App
 
