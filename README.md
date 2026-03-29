@@ -40,7 +40,7 @@ Open the site → tap the Share button → **Add to Home Screen**
 
 ## 🧪 Why Chromemory’s Scoring Is Different
 
-Most colour memory games rely on crude weighted HSV/HSB distances with arbitrary forgiveness rules. Chromemory uses the full **CIEDE2000 (ΔE₀₀)** formula — the same perceptual standard trusted by printing, paint manufacturing, display calibration labs, and professional colour science. Every score is now clinically fair and consistent, no more juggling hacks.
+Most colour memory games rely on crude weighted HSV/HSB distances with arbitrary forgiveness rules. Chromemory uses the full **CIEDE2000 (ΔE₀₀)** formula — the same perceptual standard trusted by printing, paint manufacturing, display calibration labs, and professional colour science. Every score is now clinically fair and consistent.
 
 ## 🛠️ Tech Stack
 
