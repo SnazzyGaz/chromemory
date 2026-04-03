@@ -821,6 +821,106 @@ html, body {
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
 }
 
+/* ── DESKTOP REBALANCE ── */
+@media (min-width: 1100px) {
+  #game, #result, #end {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stage-panel,
+  .result-stage,
+  .end-stage {
+    flex: 1 1 auto;
+    width: 100%;
+    padding: 24px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .stage-colour-wrap,
+  .result-stage-wrap {
+    width: min(54vh, 500px);
+    height: min(54vh, 500px);
+  }
+
+  .ctrl-panel,
+  .result-panel,
+  .end-panel {
+    position: absolute;
+    top: 50%;
+    right: clamp(24px, 3vw, 48px);
+    transform: translateY(-50%);
+    width: clamp(360px, 24vw, 430px);
+    max-height: calc(100vh - 48px);
+    padding: 26px 24px;
+    border: 0.5px solid var(--line2);
+    border-radius: 22px;
+    background: rgba(38,38,42,0.94);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.28);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    overflow-y: auto;
+  }
+
+  .ctrl-panel,
+  .result-panel,
+  .end-panel {
+    border-left: none;
+  }
+
+  .sliders {
+    gap: 18px;
+    margin-bottom: 24px;
+  }
+
+  .slider-row {
+    gap: 12px;
+  }
+
+  .slider-track {
+    height: 14px;
+    border-radius: 7px;
+  }
+
+  .slider-thumb {
+    width: 20px;
+    height: 20px;
+  }
+
+  .slider-native {
+    height: 42px;
+  }
+
+  .slider-val {
+    min-width: 46px;
+    font-size: 12px;
+  }
+
+  .result-score-big {
+    font-size: clamp(48px, 4vw, 68px);
+  }
+
+  .end-score {
+    font-size: clamp(52px, 4vw, 72px);
+  }
+}
+
+@media (min-width: 1600px) {
+  .stage-colour-wrap,
+  .result-stage-wrap {
+    width: min(58vh, 560px);
+    height: min(58vh, 560px);
+  }
+
+  .ctrl-panel,
+  .result-panel,
+  .end-panel {
+    right: clamp(32px, 4vw, 72px);
+    width: clamp(380px, 22vw, 460px);
+  }
+}
+
 /* ── MOBILE ── */
 @media (max-width: 640px) {
 
@@ -1574,11 +1674,12 @@ function fmt(n) { return n.toFixed(2); }
 function grade(n) {
   const tiers = [
     { min: 97, msgs: ['Uncanny.', 'Inhuman.', 'Perfect recall.', 'Are you even human?', 'Flawless.'] },
-    { min: 90, msgs: ['Near perfect.', 'Razor sharp.', 'Exceptional.', 'Barely a trace off.', 'Almost flawless.'] },
-    { min: 80, msgs: ['Excellent.', 'Really strong.', 'Great eye.', 'Very precise.', 'Impressive recall.'] },
-    { min: 68, msgs: ['Good eye.', 'Solid.', 'Not bad at all.', 'You\'ve got it.', 'Nice work.'] },
-    { min: 52, msgs: ['Decent.', 'Getting there.', 'Room to grow.', 'Passable.', 'Nearly.'] },
-    { min: 35, msgs: ['Keep practising.', 'A bit off.', 'You\'ll get there.', 'Rough around the edges.', 'Needs work.'] },
+    { min: 90, msgs: ['Exceptional.', 'Near perfect.', 'Dead on.', 'Precisely matched.', 'Locked in.', 'Almost exact.', 'Extremely accurate.'] },
+    { min: 80, msgs: ['Very close.', 'Strong match.', 'Highly accurate.', 'Tight.', 'Well judged.', 'Clean.', 'Nearly exact.'] },
+    { min: 70, msgs: ['Solid.', 'Good read.', 'Decent match.', 'Reasonably close.', 'On track.', 'Holding.', 'Close, not clean.'] },
+    { min: 60, msgs: ['Slightly off.', 'Not quite there.', 'Loose.', 'Drifting.', 'Off target.', 'Missed slightly.', 'Unstable.'] },
+    { min: 50, msgs: ['Noticeably off.', 'Off by a margin.', 'Mismatch.', 'Misjudged.', "Didn't land.", 'Out of line.', 'Off balance.'] },
+    { min: 40, msgs: ['Inaccurate.', 'Off.', 'Wide miss.', 'Incorrect.', 'Unreliable.', 'Not matching.', 'Broken match.'] },
     { min: 0,  msgs: ['Way off.', 'Not quite.', 'Yikes.', 'Back to basics.', 'Colour blind?'] },
   ];
   const tier = tiers.find(t => n >= t.min);
