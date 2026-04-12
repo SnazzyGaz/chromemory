@@ -2174,6 +2174,10 @@ function playSeed() {
     }, 2500);
     return;
   }
+if (isDailyMode && seedStr !== getDailySeed()) {
+    isDailyMode = false;
+  }
+  dailyScoreSubmitted = false;
   document.getElementById('home-seed-display').textContent = seedStr;
   rng = mulberry32(seedNum);
   buildColours();
@@ -2589,6 +2593,7 @@ function nextRound() {
 }
 
 function showEnd() {
+  document.getElementById('submit-daily-btn').style.display = 'none';
   const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
 
   document.getElementById('end-seed').textContent = seedStr;
